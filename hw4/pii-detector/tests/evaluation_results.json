@@ -1,0 +1,42 @@
+{
+  "total_tests": 3,
+  "passed": 3,
+  "results": [
+    {
+      "test": "Clean code (false positive test)",
+      "file": "/Users/nicolacapriroloteran/Desktop/Education/JHU MBA/Gen AI/Homework/hw4/pii-detector/examples/clean_code.py",
+      "actual_findings": 0,
+      "actual_patterns": [],
+      "passed": true
+    },
+    {
+      "test": "Mixed log file",
+      "file": "/Users/nicolacapriroloteran/Desktop/Education/JHU MBA/Gen AI/Homework/hw4/pii-detector/examples/mixed_log.txt",
+      "actual_findings": 7,
+      "actual_patterns": [
+        "CNS",
+        "CPF",
+        "DATE_OF_BIRTH",
+        "EMAIL",
+        "PHONE_BR",
+        "SSN"
+      ],
+      "passed": true
+    },
+    {
+      "test": "Patient demo data",
+      "file": "/Users/nicolacapriroloteran/Desktop/Education/JHU MBA/Gen AI/Homework/hw4/pii-detector/examples/patient_demo.py",
+      "actual_findings": 13,
+      "actual_patterns": [
+        "API_KEY",
+        "CPF",
+        "CREDIT_CARD",
+        "DATE_OF_BIRTH",
+        "EMAIL",
+        "PHONE_BR",
+        "SSN"
+      ],
+      "passed": true
+    }
+  ]
+}

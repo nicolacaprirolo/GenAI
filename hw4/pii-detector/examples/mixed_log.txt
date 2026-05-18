@@ -1,0 +1,13 @@
+[2024-05-18 09:12:33] INFO: Application started
+[2024-05-18 09:12:34] INFO: Database connection established
+[2024-05-18 09:13:15] WARNING: User authentication for maria.santos@example.com from IP 192.168.1.105
+[2024-05-18 09:14:22] DEBUG: Processing patient record CPF: 123.456.789-09
+[2024-05-18 09:15:10] ERROR: Payment failed for card ending in 0366
+[2024-05-18 09:16:05] INFO: Phone verification sent to (11) 98765-4321
+[2024-05-18 09:17:33] INFO: Request from john.doe@example.com
+[2024-05-18 09:18:42] DEBUG: SSN validation: 078-05-1120
+[2024-05-18 09:19:11] INFO: Patient birth date confirmed: 22/07/1972
+[2024-05-18 09:19:45] INFO: CNS lookup: 123 4567 8901 2345
+[2024-05-18 09:20:00] INFO: Background job started, no PII in this line
+[2024-05-18 09:21:15] INFO: System health check passed
+[2024-05-18 09:22:00] INFO: Application shutdown initiated
