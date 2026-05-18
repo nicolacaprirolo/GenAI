@@ -65,7 +65,7 @@ Output is saved to `outputs/evaluation_results.json`.
 ## Key Findings
 
 - **Unstructured prompts** produce readable prose but often omit critical information categories
-- **Structured prompts** ensure coverage of key sections but can feel formulaic
+- **Structured prompts** cover key sections reliably but can feel formulaic
 - **Safety-focused prompts** properly surface uncertainty and clinician review requirements, supporting human oversight
 
 V3 (Safety-First) is recommended for production because it maintains explicit human review boundaries and surfaces missing data that could affect patient safety.

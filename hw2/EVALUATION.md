@@ -95,7 +95,7 @@ This finding reflects foundational course material on few-shot learning and prom
 If deployed clinically, V3 (Safety-First) would be the starting point. However:
 
 - Test with real patient cases and clinical expert review
-- Measure not just information completeness but clinician trust and adoption
+- Measure information completeness alongside clinician trust and adoption
 - Monitor for alert fatigue if all briefs flag "clinician review required"
 - Consider a hybrid approach: V3 for high-risk cases, V2 for routine cases
 - Add guardrails to prevent hallucinated drug interactions or safety concerns
