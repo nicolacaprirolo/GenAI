@@ -1,185 +1,144 @@
-# HW4: PII Detector Skill (Three-Layer)
+## 🎥 Video Walkthrough
 
-A reusable Claude Code skill for healthcare developers. Three layers: fast regex, LLM-based semantic detection, and synthetic replacement.
+**[▶️ Watch on Loom](PASTE_LOOM_LINK_HERE)**
 
-## One User / One Task / One Metric
+Link: PASTE_LOOM_LINK_HERE
 
-- **User**: developer working with healthcare data under LGPD or HIPAA
-- **Task**: detect and replace PII in files before commit, log, or LLM prompt
-- **Metric**: precision, recall, F1 against a labeled ground-truth dataset
+---
 
-## Headline Result
+# HW4 (Week 5): PII Detector Skill
 
-| Metric | Value |
-|--------|-------|
-| Precision | 1.000 |
-| Recall | 1.000 |
-| F1 | 1.000 |
-| Files evaluated | 4 (2 positive, 1 negative, 1 mixed) |
-| Pattern findings | 20 true positives, 0 false positives, 0 false negatives |
+A reusable Claude Code skill that scans code, logs, and text for personally identifiable information. Submission for BU.330.760.41 Homework 4 by Nicola Capriolo Teran.
 
-After adding an all-zeros template filter, the regex detector achieves perfect precision and recall on the labeled dataset. Honest caveat: the dataset is small (4 files); production F1 would likely settle around 0.95 with broader testing.
+## Rubric Mapping
 
-## The Three Layers
+| Rubric requirement | File / location |
+|--------------------|-----------------|
+| Skill folder under `.claude/skills/` | `.claude/skills/pii-detector/` |
+| SKILL.md with frontmatter (name + description) | `.claude/skills/pii-detector/SKILL.md` |
+| Script in `scripts/` subdirectory | `.claude/skills/pii-detector/scripts/detect.py` |
+| README with video link | this file |
+| Optional `references/` | `.claude/skills/pii-detector/references/CLAUDE_CODE_INTEGRATION.md` |
 
-### Layer 1: Pattern Detection (`detect.py`)
-- Fast regex-based scanner with check-digit validation
-- 9 pattern types: CPF, CPF_RAW, CNS, SSN, PHONE_BR, PHONE_US, EMAIL, DATE_OF_BIRTH, CREDIT_CARD, API_KEY
-- CPF validated with modulo-11 algorithm; credit cards validated with Luhn
-- All-zeros filter excludes obvious templates ("000-00-0000", "(000) 000-0000")
-- No LLM required; runs in milliseconds
+## What This Skill Does
 
-### Layer 2: Semantic Detection (`semantic_detector.py`)
-- LLM-based scanner for PII the regex can't catch
-- Catches: person names, physical addresses, free-text health info, contextual identifiers
-- Returns structured JSON with line numbers, types, and explanations
-- Live mode uses Ollama (or any OpenAI-compatible endpoint)
-- Mock mode for offline grading
+Scans a file (code, log, free text) and finds PII patterns. Three layers:
 
-### Layer 3: Synthetic Replacement (`fix.py`)
-- Reads regex findings and replaces each with a synthetic equivalent
-- Synthetic CPFs are Luhn-valid (parseable as CPFs in downstream code)
-- Synthetic emails use example.com (reserved for documentation)
-- Synthetic US phones use 555-prefix (reserved for fiction)
-- Synthetic SSNs use 900-prefix (not assigned by SSA)
-- `--in-place` option overwrites; default writes to `.cleaned` for review
+| Layer | Script | Purpose |
+|-------|--------|---------|
+| 1 | `detect.py` | Deterministic regex + Luhn check + CPF mod-11 validation |
+| 2 | `semantic_detector.py` | LLM layer for names, addresses, free-text PHI the regex cannot see |
+| 3 | `fix.py` | Replaces every finding with a synthetic equivalent that preserves the format |
 
-## Files
+The deterministic script is genuinely load-bearing. A prompt alone cannot run Luhn validation on credit card numbers or compute Brazilian CPF check digits with modulo-11 arithmetic. Those calculations need code.
+
+## Why I Chose This Skill
+
+I work in healthtech. LGPD (Brazil) and HIPAA (US) compliance means PII cannot leak into commits, logs, or LLM prompts. Commercial DLP tools target enterprise security teams. This skill targets the developer at the keyboard with a fast local scanner that runs before commit, before sharing logs, or before pasting context into an LLM.
+
+The narrow scope (PII patterns, not arbitrary content) makes it reusable across any codebase that handles regulated data.
+
+## Folder Structure
 
 ```
 hw4/
-├── README.md                          # this file
-├── EVALUATION.md                      # P/R/F1 methodology and results
-├── VIDEO_SCRIPT.md                    # 2-3 min walkthrough script
-├── .gitignore
-└── pii-detector/
-    ├── SKILL.md                       # Claude Code skill manifest
-    ├── detect.py                      # Layer 1: regex detector
-    ├── semantic_detector.py           # Layer 2: LLM semantic detector
-    ├── fix.py                         # Layer 3: synthetic replacement
-    ├── CLAUDE_CODE_INTEGRATION.md     # how Claude uses the skill
-    ├── examples/
-    │   ├── clean_code.py              # positive test: no PII (FP test)
-    │   ├── version_string_traps.py    # negative test: template strings
-    │   ├── mixed_log.txt              # log with 7 PII findings
-    │   ├── patient_demo.py            # dense PII file (13+ findings)
-    │   └── patient_narrative.txt      # free-text narrative for semantic test
-    └── tests/
-        ├── evaluate.py                # P/R/F1 evaluator vs ground truth
-        └── evaluation_results.json    # latest test run output
+├── README.md                                      (this file, video link at top)
+├── .claude/
+│   └── skills/
+│       └── pii-detector/
+│           ├── SKILL.md                           (skill manifest with frontmatter)
+│           ├── scripts/
+│           │   ├── detect.py                      (LAYER 1: regex detector)
+│           │   ├── semantic_detector.py           (LAYER 2: LLM detector)
+│           │   └── fix.py                         (LAYER 3: synthetic replacement)
+│           └── references/
+│               └── CLAUDE_CODE_INTEGRATION.md     (usage transcript)
+├── examples/                                      (test files: positive + negative + narrative)
+│   ├── clean_code.py
+│   ├── version_string_traps.py
+│   ├── mixed_log.txt
+│   ├── patient_demo.py
+│   └── patient_narrative.txt
+├── tests/
+│   ├── evaluate.py                                (P/R/F1 evaluator)
+│   └── evaluation_results.json
+├── EVALUATION.md                                  (methodology and results)
+├── VIDEO_SCRIPT.md                                (talking notes for the recording)
+├── requirements.txt
+└── .gitignore
 ```
 
-## Quickstart
+## How To Use (Three Test Prompts)
+
+The rubric requires testing on at least 3 prompts: one normal, one edge case, one cautious case.
+
+### 1. Normal case (regex detection)
 
 ```bash
-# Layer 1: regex detection (no dependencies beyond Python stdlib)
-python3 pii-detector/detect.py pii-detector/examples/patient_demo.py
-
-# Layer 1 with JSON output
-python3 pii-detector/detect.py --json pii-detector/examples/patient_demo.py
-
-# Layer 2: semantic detection (mock mode, no LLM needed)
-python3 pii-detector/semantic_detector.py --mock pii-detector/examples/patient_narrative.txt
-
-# Layer 2: semantic detection (live mode, requires Ollama)
-python3 pii-detector/semantic_detector.py --model devstral:latest pii-detector/examples/patient_narrative.txt
-
-# Layer 3: replace PII with synthetic data
-python3 pii-detector/fix.py pii-detector/examples/patient_demo.py
-diff pii-detector/examples/patient_demo.py pii-detector/examples/patient_demo.py.cleaned
-
-# Run the evaluation suite
-python3 pii-detector/tests/evaluate.py
+python3 .claude/skills/pii-detector/scripts/detect.py examples/patient_demo.py
 ```
 
-## Patterns Detected (Layer 1)
+Returns 13 findings across 7 pattern types (CPF, email, phone, SSN, date of birth, credit card, API key). All valid per check-digit validation.
 
-| Pattern | Format | Region | Validation |
-|---------|--------|--------|------------|
-| CPF | 000.000.000-00 | Brazil | Check-digit (mod 11) |
-| CPF_RAW | 11 digits | Brazil | Check-digit (mod 11) |
-| CNS | 15 digits | Brazil | Format only |
-| SSN | 000-00-0000 | US | Format only |
-| PHONE_BR | (00) 00000-0000 | Brazil | Format only |
-| PHONE_US | (000) 000-0000 | US | Format only |
-| EMAIL | name@domain.tld | Universal | Format only |
-| DATE_OF_BIRTH | DD/MM/YYYY | Universal | Format only |
-| CREDIT_CARD | 13-16 digits | Universal | Luhn |
-| API_KEY | sk-, pk_, api-key= patterns | Universal | Format only |
+### 2. Edge case (semantic detection for names + addresses)
 
-All patterns include an all-zeros filter to exclude template strings.
-
-## Semantic Categories (Layer 2)
-
-| Category | Examples |
-|----------|----------|
-| NAME | "Maria Santos", "Dr. Silva" |
-| ADDRESS | "Rua das Flores 123, São Paulo" |
-| HEALTH_INFO | "Type 2 diabetes diagnosed in 2018" |
-| CONTEXTUAL_ID | "the patient in room 304" |
-
-The semantic layer specifically does NOT flag:
-- Generic terms (patient, doctor) without identifying context
-- Public figures in clearly non-private contexts
-- Programming identifiers (variable names, function names)
-- Obviously synthetic sample data
-
-## Evaluation Results
-
-```
-File                       Expected  Got   TP  FP  FN  Precision  Recall  F1
-clean_code.py              0         0     0   0   0   1.0        1.0     1.0
-version_string_traps.py    0         0     0   0   0   1.0        1.0     1.0
-mixed_log.txt              7         7     7   0   0   1.0        1.0     1.0
-patient_demo.py            13        13    13  0   0   1.0        1.0     1.0
-OVERALL                    20        20    20  0   0   1.0        1.0     1.0
+```bash
+python3 .claude/skills/pii-detector/scripts/semantic_detector.py --mock examples/patient_narrative.txt
 ```
 
-See `EVALUATION.md` for detailed methodology.
+Catches 4 semantic findings the regex cannot see: full patient name, street address with postal code, contextual identifier ("the patient in room 304"), minor's name with age.
 
-## Backend Configuration
+### 3. Cautious / negative case (avoid false positives)
 
-The semantic detector and fix.py both support:
+```bash
+python3 .claude/skills/pii-detector/scripts/detect.py examples/version_string_traps.py
+```
 
-| Backend | Use case | Configuration |
-|---------|----------|---------------|
-| Mock | Offline grading | `--mock` flag |
-| Ollama (local) | Development | Default if reachable at localhost:11434 |
-| Other OpenAI-compatible | Production | Set `--base-url` and `--model` |
+Returns 0 findings. Strings like "000-00-0000" and "(000) 000-0000" look like SSN/phone patterns but the all-zeros filter excludes them as obvious templates.
 
-## Integration with Claude Code
+### Bonus: Apply synthetic replacement
 
-See `pii-detector/CLAUDE_CODE_INTEGRATION.md` for a full conversation transcript showing how Claude reads the SKILL.md, runs the layered detection, and offers reversible fixes.
+```bash
+python3 .claude/skills/pii-detector/scripts/fix.py examples/patient_demo.py
+diff examples/patient_demo.py examples/patient_demo.py.cleaned
+```
 
-## Why a Three-Layer Approach
+Replaces every PII finding with a synthetic equivalent that preserves format (Luhn-valid synthetic CPFs, example.com emails, 555-prefix phones).
 
-A pure regex tool would miss names and free-text PII. A pure LLM tool would be slow and expensive for every scan. The hybrid:
+## What The Scripts Do (Deterministic Part)
 
-- **Layer 1** runs on every commit (cheap, fast, catches the most common PII)
-- **Layer 2** runs on review or before LLM upload (slower, semantic, optional)
-- **Layer 3** runs when you want to clean a file (uses Layer 1 findings, generates synthetic data)
+`detect.py` is where prose alone cannot do the job:
 
-Each layer is optional and independently usable. The architecture mirrors the recommended pattern for healthcare DLP: defense in depth with reversible actions.
+- **CPF validation**: implements the Brazilian taxpayer ID check-digit algorithm (modulo 11 with multiplier sequences). The model would have to do this arithmetic in its head and would make mistakes.
+- **Credit card validation**: implements the Luhn algorithm. Same reason.
+- **Multi-pattern scanning**: 9 patterns with line-numbered findings. A model could approximate this but would miss matches on long files.
+- **All-zeros filter**: skips obvious template strings to keep precision at 1.0.
 
-## Limitations
+The LLM layer (`semantic_detector.py`) is what the model is good at: free-text reasoning about whether a string in context is a person name, address, or contextual identifier.
 
-- Pattern set is fixed at code-time; adding new patterns requires editing detect.py
-- Semantic detector's accuracy depends on the LLM (cogito or devstral here; results vary by model)
-- Synthetic replacements are deterministic with a fixed random seed for reproducibility
-- Names that are also common words (Hope, Faith, Grace) may be missed by the semantic layer
-- The evaluation dataset is small (4 files); a production deployment would need 100+ labeled files
-- No binary file support (no image/PDF scanning)
+## What Worked Well
 
-## Course Material Tie-In
+- The three-layer architecture lets each layer do what it is good at
+- Precision and recall both hit 1.0 on the labeled dataset
+- Synthetic replacement preserves format so cleaned files still parse downstream
+- Skill is reusable in any project: drop the `.claude/skills/pii-detector/` folder anywhere
 
-- **OWASP Top 10 for LLM Applications**: This skill directly addresses LLM06 (Sensitive Information Disclosure) by preventing PII from reaching LLM prompts. The layered approach matches OWASP's defense-in-depth recommendation.
-- **The AI Agent Handbook (Google)**: The skill follows the recommended pattern of clear tool boundaries (detect / semantic / fix as separate scripts), explicit schemas (JSON output), and reversible actions (.cleaned by default).
-- **The GenAI Divide (Challapally et al., 2025)**: The paper notes that enterprise AI fails when teams skip the privacy and compliance work. This skill is the kind of utility that makes other AI projects shippable in regulated industries.
+## What Limitations Remain
 
-## Privacy and Safety Notes
+- Pattern set is fixed at code-time; new PII types need code edits
+- Test dataset is 4 files; production deployment would need 100+
+- Mock mode for the semantic layer is convenient for grading but a live model is the real test
+- No binary file support (PDFs, images, EHR exports out of scope)
+- Names that are also common words ("Hope", "Faith", "Grace") may be missed by the semantic layer
 
-- All test data is synthetic
-- Synthetic CPFs are Luhn-valid but not assigned to anyone (they're random with valid check digits)
-- Synthetic emails use example.com (reserved by IANA)
-- Synthetic phones use 555-prefix (reserved for fiction)
-- This is an educational prototype; production use would need security review and audit logging
+## Evaluation Summary
+
+| File | Type | TP | FP | FN | Precision | Recall | F1 |
+|------|------|----|----|----|-----------|--------|----|
+| clean_code.py | Negative | 0 | 0 | 0 | 1.0 | 1.0 | 1.0 |
+| version_string_traps.py | Negative (traps) | 0 | 0 | 0 | 1.0 | 1.0 | 1.0 |
+| mixed_log.txt | Mixed | 7 | 0 | 0 | 1.0 | 1.0 | 1.0 |
+| patient_demo.py | Dense PII | 13 | 0 | 0 | 1.0 | 1.0 | 1.0 |
+| **OVERALL** | | **20** | **0** | **0** | **1.0** | **1.0** | **1.0** |
+
+Full methodology in `EVALUATION.md`.

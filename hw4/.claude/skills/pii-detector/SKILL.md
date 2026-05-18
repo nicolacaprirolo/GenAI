@@ -30,16 +30,16 @@ Run the detector with a file path or piped input:
 
 ```bash
 # Scan a file
-python3 detect.py path/to/file.py
+python3 scripts/detect.py path/to/file.py
 
 # Scan piped input
-cat log.txt | python3 detect.py -
+cat log.txt | python3 scripts/detect.py -
 
 # Scan with specific patterns only
-python3 detect.py --patterns cpf,email path/to/file.py
+python3 scripts/detect.py --patterns cpf,email path/to/file.py
 
 # Output as JSON
-python3 detect.py --json path/to/file.py
+python3 scripts/detect.py --json path/to/file.py
 ```
 
 ## Patterns Detected
@@ -87,7 +87,7 @@ Or JSON format:
 When using this skill from Claude Code, the agent should:
 
 1. Read the file being scanned
-2. Invoke `python3 detect.py <file>` via the Bash tool
+2. Invoke `python3 scripts/detect.py <file>` via the Bash tool
 3. Parse the structured output
 4. Surface findings to the user with recommended actions:
    - Replace with synthetic data

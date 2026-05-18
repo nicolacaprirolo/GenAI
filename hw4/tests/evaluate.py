@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).parent.parent
-DETECT_SCRIPT = REPO_ROOT / "detect.py"
+DETECT_SCRIPT = REPO_ROOT / ".claude" / "skills" / "pii-detector" / "scripts" / "detect.py"
 EXAMPLES_DIR = REPO_ROOT / "examples"
 
 
