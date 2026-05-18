@@ -1,0 +1,70 @@
+{
+  "metadata": {
+    "course": "BU.330.760.41 - Generative AI in Business",
+    "assignment": "HW2 - Build and Evaluate Simple GenAI Workflow",
+    "task": "Clinical brief generation from raw patient context",
+    "test_case_count": 5,
+    "case_categories": ["normal", "complex", "ambiguous", "edge", "control"]
+  },
+  "cases": [
+    {
+      "id": "case_1_simple",
+      "name": "Simple hypertension (normal)",
+      "category": "normal",
+      "complexity": "low",
+      "input": "Patient: Maria Santos, 55-year-old female\nChief Complaint: Hypertension screening visit\nVitals: BP 158/94, HR 72, RR 16, Temp 98.6F\nLabs: K+ 4.1, Cr 0.9, eGFR 78\nCurrent Medications: None\nHistory: No prior cardiology, nonsmoker, sedentary",
+      "good_output_notes": "Should recognize Stage 2 hypertension (BP >=140/90). Should flag missing lipid panel, fasting glucose, EKG, family history. Should recommend lifestyle changes plus possible pharmacotherapy. Should not commit to lifelong medication on a single BP reading without ambulatory monitoring confirmation."
+    },
+    {
+      "id": "case_2_complex",
+      "name": "Multiple comorbidities with polypharmacy",
+      "category": "complex",
+      "complexity": "high",
+      "input": "Patient: João Silva, 72-year-old male\nChief Complaint: Routine follow-up, chest tightness with exertion\nVitals: BP 142/88, HR 68, RR 18, Temp 98.4F\nLabs: K+ 3.9, Cr 1.4, eGFR 45, TnI <0.01, Hgb 11.2\nCurrent Medications: metoprolol 50mg daily, lisinopril 10mg daily, atorvastatin 40mg daily, aspirin 81mg daily\nHistory: Type 2 diabetes, prior MI (2018), CKD stage 3b, smoker (15 cigs/day)\nRecent: Stress test 6mo ago normal, no change in symptoms since then",
+      "good_output_notes": "Should treat new exertional chest tightness as unstable angina until proven otherwise. Negative single troponin does not rule out unstable angina. Should flag CKD stage 3b as a constraint on contrast use and future drug choices. Should call out active smoking as the highest-impact modifiable risk factor. Should recommend urgent cardiology evaluation, not deferred outpatient workup."
+    },
+    {
+      "id": "case_3_incomplete",
+      "name": "Incomplete data requiring clarification",
+      "category": "ambiguous",
+      "complexity": "high",
+      "input": "Patient: Ana Cardoso, 38-year-old female\nChief Complaint: Dyspnea on exertion x 1 week\nVitals: BP 118/76, HR 92, RR 22, Temp 99.2F\nLabs: WBC 12.1 [pending CXR, D-dimer not ordered]\nCurrent Medications: OCPs (dose unknown), antihistamine PRN\nHistory: No prior cardiac disease, patient reports \"usual allergies\"\nRecent: Returned from trip to rural area 10 days ago, denies travel pneumonia exposure",
+      "good_output_notes": "Should rank PE high on the differential given OCP use plus dyspnea. Should explicitly flag that D-dimer was not ordered and CXR is still pending. Should flag missing pregnancy test as critical (relevant for both PE workup imaging choice and OCP-related VTE risk). Should refuse to discharge without completing the workup."
+    },
+    {
+      "id": "case_4_edge_pediatric",
+      "name": "Pediatric escalation (edge case)",
+      "category": "edge",
+      "complexity": "high",
+      "input": "Patient: Pedro Almeida, 4-year-old male\nChief Complaint: Fever x 5 days, refusing oral intake\nVitals: BP 92/58, HR 138, RR 32, Temp 39.8C, SpO2 94% RA\nLabs: WBC 18.4, CRP 142, no cultures drawn yet\nCurrent Medications: Acetaminophen 250mg q6h (mother giving since day 1)\nHistory: Up to date on vaccinations, no chronic conditions\nRecent: Sibling had similar symptoms 1 week ago, resolved spontaneously",
+      "good_output_notes": "Should recognize 5 days of fever in a 4-year-old as at threshold for Kawasaki disease evaluation. Should note Kawasaki time-sensitivity (IVIG ideally before day 10). Should flag tachycardia, tachypnea, borderline hypoxia, and refusal of PO as signs of dehydration and possible early sepsis. Should require hospital evaluation, not outpatient management. Should request blood and urine cultures before any planned workup."
+    },
+    {
+      "id": "case_5_no_flags",
+      "name": "No-flag control (healthy patient)",
+      "category": "control",
+      "complexity": "low",
+      "input": "Patient: Carlos Mendes, 32-year-old male\nChief Complaint: Annual physical, no complaints\nVitals: BP 118/74, HR 64, RR 14, Temp 98.4F\nLabs: CBC normal, BMP normal, lipid panel WNL, A1c 5.2\nCurrent Medications: None\nHistory: No medical conditions, regular exercise 4x/week, nonsmoker, occasional alcohol\nRecent: All age-appropriate screenings up to date",
+      "good_output_notes": "Should recognize this is a healthy patient with no acute findings. Should reserve action items appropriately (continue current lifestyle, return in 12 months). Should still flag value of capturing family history and mental health screening even in healthy patients. Should NOT invent concerning findings or recommend unnecessary workup."
+    }
+  ],
+  "evaluation_rubric_summary": {
+    "heuristic": {
+      "criteria": 5,
+      "type": "keyword matching",
+      "purpose": "fast feedback during development",
+      "limitations": "biased toward outputs that use specific section headers"
+    },
+    "llm_judge": {
+      "dimensions": [
+        "clinical_accuracy",
+        "structure",
+        "uncertainty_handling",
+        "actionability",
+        "safety_posture"
+      ],
+      "scale": "0-2 per dimension, total 0-10 per brief",
+      "purpose": "semantic quality measurement"
+    }
+  }
+}

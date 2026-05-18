@@ -2,6 +2,28 @@
 
 Building and evaluating a GenAI workflow with real LLM calls, prompt iteration, and LLM-as-judge evaluation.
 
+**Demo video**: [PASTE YOUR LOOM/YOUTUBE LINK HERE AFTER RECORDING]
+
+## Rubric Mapping
+
+| Rubric requirement | File |
+|--------------------|------|
+| README | `README.md` (this file) |
+| App entry point | `app.py` (thin wrapper) and `brief_generator.py` (core), `llm_judge.py` (evaluator) |
+| Prompts (>=2 revisions) | `prompts.md` (full V1, V2, V3 with what changed and why) |
+| Evaluation set (>=5 cases) | `eval_set.json` (5 cases with categories and good_output_notes) |
+| 1-2 page report | `report.md` (business case, model choice, results, limits, deploy plan) |
+| Iteration narrative | `ITERATION_LOG.md` (first-person evolution story) |
+| Evaluation methodology | `EVALUATION.md` (heuristic vs LLM-judge, per-dimension scores) |
+| Video walkthrough script | `VIDEO_SCRIPT.md` (talking notes for 2:30 recording) |
+
+## One-Command Run
+
+```bash
+python3 app.py            # mock mode (no LLM needed, reproducible for graders)
+python3 app.py --live     # live mode (requires Ollama at localhost:11434)
+```
+
 ## Problem
 
 Primary care clinicians in resource-constrained settings see 30-50 patients per shift. They need a 30-second structured summary of each patient that surfaces what's relevant, what's missing, and what requires their judgment.
