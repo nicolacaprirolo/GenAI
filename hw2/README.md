@@ -1,8 +1,14 @@
+## 🎥 Video Walkthrough
+
+**[▶️ Watch on Loom (2 minutes)](https://www.loom.com/share/a9a3c3118de94848b10fded20b0c02a6)**
+
+Link: https://www.loom.com/share/a9a3c3118de94848b10fded20b0c02a6
+
+---
+
 # HW2: Clinical Brief Generator with Prompt Iteration
 
 Building and evaluating a GenAI workflow with real LLM calls, prompt iteration, and LLM-as-judge evaluation.
-
-**Demo video**: https://www.loom.com/share/a9a3c3118de94848b10fded20b0c02a6
 
 ## Rubric Mapping
 
