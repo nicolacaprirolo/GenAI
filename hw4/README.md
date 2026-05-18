@@ -1,8 +1,8 @@
 ## 🎥 Video Walkthrough
 
-**[▶️ Watch on Loom](PASTE_LOOM_LINK_HERE)**
+**[▶️ Watch on Loom](https://www.loom.com/share/68c15a3eb09f4857a44c832afa402826)**
 
-Link: PASTE_LOOM_LINK_HERE
+Link: https://www.loom.com/share/68c15a3eb09f4857a44c832afa402826
 
 ---
 
