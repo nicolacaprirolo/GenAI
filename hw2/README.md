@@ -2,7 +2,7 @@
 
 Building and evaluating a GenAI workflow with real LLM calls, prompt iteration, and LLM-as-judge evaluation.
 
-**Demo video**: [PASTE YOUR LOOM/YOUTUBE LINK HERE AFTER RECORDING]
+**Demo video**: https://www.loom.com/share/a9a3c3118de94848b10fded20b0c02a6
 
 ## Rubric Mapping
 
