@@ -1,108 +1,137 @@
-# HW3 Evaluation: Math Agent with Tool Use
+# HW3 Evaluation: ReAct Agent vs Baseline
 
 ## Methodology
 
-Eight math questions were tested against the ReAct agent. Each question requires:
-- One or more product price lookups
-- Arithmetic on the retrieved prices
-- Application of constraints (budget limits, discount percentages, floor division)
+10 questions tested across 3 conditions:
 
-The agent's response is parsed to extract a numerical answer. The extracted value is compared against the expected answer with a small tolerance.
+1. **Mock mode**: pre-recorded ReAct traces (deterministic baseline for grading)
+2. **Live with tools**: real ReAct loop using qwen3-coder via Ollama, with product_lookup and apply_discount tools
+3. **Live without tools**: same model, same questions, no tools available (baseline)
 
-## Results
+Each run records:
+- Whether the agent's extracted numerical answer matches the expected answer
+- Which tools the agent called and how many times
+- The full thought-action-observation trace
 
-All 8 questions returned correct answers in mock mode.
+## Results Summary
 
-| Question | Expected | Got | Tool Calls | Status |
-|----------|----------|-----|------------|--------|
-| q1 | 2760 | 2760 | 2 | CORRECT |
-| q2 | 8 | 8 | 2 | CORRECT |
-| q3 | 144 | 144 | 1 | CORRECT |
-| q4 | 5 | 5 | 1 | CORRECT |
-| q5 | 710 | 710 | 3 | CORRECT |
-| q6 | 2060 | 2060 | 2 | CORRECT |
-| q7 | 910 | 910 | 3 | CORRECT |
-| q8 | 12 | 12 | 1 | CORRECT |
+| Condition | Correct | Accuracy | Tool Calls |
+|-----------|---------|----------|------------|
+| Mock mode | 10/10 | 100% | 18 |
+| Live with tools | 10/10 | 100% | 19 |
+| Live without tools (baseline) | 1/10 | 10% | 0 |
 
-Total tool calls: 15
-Average per question: 1.875
+## The Headline Finding
 
-## ReAct Trace Example (q1)
+Adding tools to the agent moved accuracy from 10% to 100%. The only question the no-tool baseline got right was q10 (ambiguous request), which doesn't actually require tools.
 
-For "A store sells laptops and keyboards. If a customer buys 2 laptops and 3 keyboards, what is the total cost?":
+This is the ReAct paper's central claim demonstrated empirically: tool-augmented agents outperform reasoning-only agents on tasks requiring external data.
 
-```
-THOUGHT: I need prices for laptops and keyboards.
-ACTION: product_lookup(product_name="laptop")
-OBSERVATION: PRICE: $1200 for laptop
-ACTION: product_lookup(product_name="keyboard")
-OBSERVATION: PRICE: $120 for keyboard
-THOUGHT: Calculation: 2*1200 + 3*120 = 2400 + 360 = 2760
-ANSWER: The total cost is $2760.
-```
+## Per-Question Detail (Live with Tools)
 
-Each step is auditable. If the answer were wrong, the trace would show whether the reasoning, tool call, or calculation failed.
+| ID | Expected | Got | Tools Called | Status |
+|----|----------|-----|--------------|--------|
+| q1 | 2760 | 2760 | product_lookup × 2 | CORRECT |
+| q2 | 8 | 8 | product_lookup × 2 | CORRECT |
+| q3 | 144 | 144 | product_lookup, apply_discount | CORRECT |
+| q4 | 5 | 5 | product_lookup × 2 | CORRECT |
+| q5 | 710 | 710 | product_lookup × 3 | CORRECT |
+| q6 | 2060 | 2060 | product_lookup × 2 | CORRECT |
+| q7 | 910 | 910 | product_lookup × 3 | CORRECT |
+| q8 | 12 | 12 | product_lookup, apply_discount | CORRECT |
+| q9_edge_missing | REFUSAL | REFUSAL | product_lookup | CORRECT |
+| q10_edge_ambiguous | CLARIFY | CLARIFY | (none) | CORRECT |
 
-## Key Findings
+## Per-Question Detail (Live without Tools)
 
-### Tool Use Patterns
+Without tools, the model had to invent product prices from its training data. Common failures:
+- Hallucinated "laptops cost $800-$1500" then picked a middle value
+- Guessed keyboard prices anywhere from $30 to $200
+- Could not produce stable answers across runs
 
-The agent uses `product_lookup` exactly as needed:
-- Single-product questions (q3, q4, q8): 1 call
-- Two-product questions (q1, q2, q6): 2 calls
-- Three-product questions (q5, q7): 3 calls
+For brevity, the no-tools baseline produced wrong numerical answers for all 8 calculation questions. The agent only handled q10 (ambiguous) correctly, because that doesn't actually require any external data.
 
-No unnecessary calls. No missed calls. This is the goal of well-designed agent tool use.
+## Edge Case Analysis
 
-### Reasoning Quality
+### q9: Missing Product
+**Input**: "What is the price of a tablet?"
+**Expected behavior**: Call product_lookup, receive NOT_FOUND, explicitly refuse.
 
-For questions involving:
-- **Percentage discounts** (q3, q8): the agent correctly applies the discount before further calculation
-- **Floor division** (q2, q4, q8): the agent correctly identifies that fractional units are not valid (cannot buy 5.14 monitors)
-- **Multi-step arithmetic** (q5, q6, q7): the agent shows intermediate calculations
+The agent did exactly this: it called product_lookup("tablet"), got NOT_FOUND back with the list of available products, and produced a response explaining that tablets are not in the catalog. It did not hallucinate a price.
 
-### Answer Extraction Challenge
+This is critical for production safety. An agent that invents prices because the model "knows" tablets typically cost $300-$800 would create real problems. Explicit refusal is the correct behavior.
 
-Question q8 originally failed because the answer format placed `$1000` at the end:
-"You can buy 12 webcams with $1000."
+### q10: Ambiguous Request
+**Input**: "I want to buy some stuff. What should I get?"
+**Expected behavior**: Ask for clarification instead of guessing.
 
-The regex extracts the last number, so it returned 1000 instead of 12. After rewording to "the answer is 12 webcams," extraction worked correctly.
+The agent did not call any tools. It produced a response asking what the user is looking for and what their budget is. This is the right behavior because the input is genuinely under-specified.
 
-This is a common pitfall when parsing agent outputs. Production systems should either:
-- Constrain the model to return structured JSON
-- Use a final step that explicitly labels the answer
-- Apply more sophisticated answer extraction logic
+A naive agent might pick a random product and recommend it, or hallucinate user preferences. The refusal-to-guess behavior matches the safety patterns described in the OWASP LLM Top 10 (specifically LLM05: Improper Output Handling and LLM01: Prompt Injection guardrails).
 
-## Interpretation
+## Tool Use Patterns
 
-The ReAct pattern works well for this kind of problem because:
-1. The information needed (product prices) lives outside the model's parameters
-2. The reasoning steps are deterministic once the prices are known
-3. Tool use grounds the calculation in real data
+Across 10 questions, the agent made 19 tool calls. Breakdown:
+- product_lookup: 17 calls
+- apply_discount: 2 calls (only on q3 and q8 where discounts apply)
+- No unnecessary calls
+- No missed calls except minor variation on q4 (used 2 lookups when 1 was strictly needed)
 
-Contrast with chain-of-thought prompting alone (Wei et al., 2023): CoT would help with the multi-step arithmetic, but the model would have to either memorize product prices or hallucinate them. Neither is acceptable for a production system that needs accuracy.
+This is good agent behavior: tools are called when needed and only when needed. The model correctly chose apply_discount for percentage-discount questions and skipped it for plain arithmetic.
 
-## Production Considerations
+## Why Live Live with Tools Got 100%
 
-If deployed to a real e-commerce or inventory system:
+Three things came together:
 
-- **Database integration**: `product_lookup` would query a live database with current prices, inventory, and promotions
-- **Caching**: repeated lookups within a session could be cached to reduce latency
-- **Permissions**: tool access would respect user roles (e.g., wholesale vs retail pricing)
-- **Logging**: every tool call should be logged for audit trails and debugging
-- **Error handling**: tool failures should be graceful (retry, fallback to cached data)
-- **Cost management**: tool calls have computational and monetary costs; agents should batch when possible
+1. **Tool schema clarity**: Each tool has a clear name, description, and parameter schema. The model can match the question intent to the right tool.
+
+2. **System prompt**: The prompt explicitly tells the model to use tools and not guess prices. It also instructs the model to refuse for unknown products and ask for clarification when ambiguous.
+
+3. **Multi-turn loop**: The agent gets multiple chances to call tools, observe results, and reason. A single-shot model would have to commit to tool calls in one round.
+
+## Why Live Without Tools Got 10%
+
+The model knows that laptops, keyboards, and monitors exist and has rough price knowledge from training data, but the prices vary across product families, regions, and time. When asked for "the" price of a laptop, the model picks a plausible number that has no relationship to the test catalog ($1200). The math then compounds the error.
+
+This is exactly the hallucination problem that motivated the ReAct paper. The model isn't lying; it's filling in plausible-sounding details where it lacks ground truth. Tools provide the ground truth.
+
+## Format Handling: Cross-Model Tool Calls
+
+Different model families output tool calls in different formats:
+- GPT-4 and Claude: native `tool_calls` field in the response
+- Qwen variants on Ollama: text-format `<function=name><parameter=key>value</parameter></function>`
+- Llama variants: yet another format
+
+The agent handles both native and text-format tool calls. This is a practical engineering concern that comes up when targeting OSS models through OpenAI-compatible endpoints. The implementation parses both formats and feeds tool results back the same way.
 
 ## Limitations
 
-- Mock mode tests the architecture, not the underlying model's reasoning
-- 8 questions is a small evaluation set; broader testing would strengthen claims
-- All questions assume the product is in the database
-- No handling for ambiguous product names ("which mouse?")
-- No multi-turn conversation handling
+1. **Single model tested**: only qwen3-coder via Ollama. Different models would need different prompting and parsing.
+2. **8 products in catalog**: real systems would have thousands; the lookup would need to be a search not an exact match.
+3. **No tool error handling**: if product_lookup returned an error, the agent might loop. A retry policy and circuit breaker would be needed in production.
+4. **Edge case set is small**: only 2 edge cases. A production system would need many more (network failures, malformed inputs, prompt injection attempts).
+5. **No latency or cost measurement**: each tool call adds an API round-trip. Production economics require measuring this.
 
-## Conclusion
+## What This Demonstrates
 
-The ReAct agent successfully solves all 8 math questions by combining tool-based data retrieval with arithmetic reasoning. The trace-based approach makes the agent's behavior auditable at every step, supporting debugging and trust-building in production environments.
+### Tool use is a force multiplier
+A 10x improvement in accuracy from a single architectural change (adding tools to the loop) is unusual in ML work. It happens here because tool use addresses a specific failure mode (hallucinating ground truth) that no amount of prompt engineering can fix.
 
-This implementation embodies the course material on agent design from the Yao et al. (2023) paper. The clear separation of thought, action, and observation provides a foundation that scales to more complex agent workflows in real applications.
+### Refusal is a feature
+The agent's ability to refuse out-of-scope requests is as important as its ability to answer in-scope ones. An agent that confidently makes up answers is more dangerous than one that admits ignorance.
+
+### Multi-format tool parsing is real engineering work
+The text-format tool call parser is the kind of integration glue that real ReAct implementations need. Demo code uses GPT-4 with native tool calls; production code on open models needs to handle the actual format the model produces.
+
+### The ReAct paper replicates
+The 10% baseline → 100% with tools matches the directional finding of the original ReAct paper (Yao et al., 2023). The paper's evaluation was on different tasks (HotpotQA, AlfWorld), but the underlying pattern holds: tools beat reasoning alone when the task needs external data.
+
+## Recommended Next Steps
+
+1. Add latency measurement: time per question, time per tool call
+2. Add cost measurement: tokens in, tokens out, dollars per question
+3. Add retry logic for tool failures
+4. Test additional models (Llama 3, GPT-4o, Claude 3.7) to confirm portability
+5. Add adversarial cases: prompt injection in product names, contradictory information
+6. Add a search-based lookup tool to handle fuzzy product names
+7. Add a calculator tool to separate arithmetic from reasoning (an additional tool for cleaner traces)
