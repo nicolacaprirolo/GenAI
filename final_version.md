@@ -23,4 +23,4 @@ Why you changed it
 I think it is very important to frame the problem in a way that the solution can be understood in a holistic manner. I also think that the solution needs to be preventative rather than reactive to truly make a difference in healthcare.
 
 One thing the assistant wrote that you did NOT want to keep as-is
-The original draft framed the bottleneck as "not data storage or retrieval, it is contextualization and presentation at the right moment." I dropped that "not X, but Y" framing because it felt academic, and rewrote it to include pattern detection, which is central to how I think about where AI actually adds
+The original draft framed the bottleneck as "not data storage or retrieval, it is contextualization and presentation at the right moment." I dropped that "not X, but Y" framing because it felt academic, and rewrote it to include pattern detection, which is where AI actually adds value.

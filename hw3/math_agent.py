@@ -565,7 +565,7 @@ def main():
     print(f"[mode] {msg}")
     if mode == "live":
         print(f"[model] {args.model}")
-    print(f"[tools] {'enabled' if not args.no_tools else 'DISABLED (baseline)'}")
+    print(f"[tools] {'ON' if not args.no_tools else 'OFF (baseline)'}")
     print()
 
     questions = [q for q in MATH_QUESTIONS if not args.question or q["id"] == args.question]
