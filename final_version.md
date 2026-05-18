@@ -14,11 +14,13 @@ Three Ways Generative AI Could Help
 - Guideline-aware recommendations: surface treatment options that are consistent with current clinical evidence and with what is locally available, reducing the need for the clinician to cross-reference multiple sources during a time-pressured encounter.
 - Clinical documentation support: assist with note-taking and coding after the encounter, reducing the administrative load that currently follows clinicians into their personal time.
 
-Notes on the Prompt
+Notes on My Edits
 
-Exact prompt used:
-I work in health tech, specifically clinical decision support for emerging markets, as the founder and CEO of Holi Labs. The problem I care about is the gap between information and context in frontline medicine. Write a short assistant_draft.md with a title, a short intro about me, a paragraph on the problem area, and a 3-bullet list of ways generative AI could help.
+What you changed yourself
+For "The Problem Area I Care About" section I added more context on the link between technology and the problem being solved. I also delved into the topic of preventative healthcare by framing the problem as a gap between information and context, and that the solution would need to address both to make a difference and close the gap between illness and health.
 
-What the assistant did well: It understood the core tension between data availability and real-time usability in clinical settings, and framed the use cases around actual clinician workflow rather than abstract AI capabilities.
+Why you changed it
+I think it is very important to frame the problem in a way that the solution can be understood in a holistic manner. I also think that the solution needs to be preventative rather than reactive to truly make a difference in healthcare.
 
-What I needed to clarify or adjust. The first draft was too specific about our technical approach and competitive positioning. I asked for a revision that describes the problem space accurately without revealing strategic details.
+One thing the assistant wrote that you did NOT want to keep as-is
+The original draft framed the bottleneck as "not data storage or retrieval, it is contextualization and presentation at the right moment." I dropped that "not X, but Y" framing because it felt academic, and rewrote it to include pattern detection, which is central to how I think about where AI actually adds

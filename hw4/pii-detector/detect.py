@@ -125,6 +125,10 @@ def scan_text(text: str, patterns_filter: list[str] | None = None) -> list[Findi
                 if pattern_name == "CPF" and not is_valid_cpf(matched_text):
                     continue
 
+                digits_only = re.sub(r"\D", "", matched_text)
+                if digits_only and set(digits_only) == {"0"}:
+                    continue
+
                 context = line.strip()[:100]
                 findings.append(
                     Finding(

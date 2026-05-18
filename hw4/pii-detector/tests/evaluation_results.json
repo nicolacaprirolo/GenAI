@@ -1,42 +1,76 @@
 {
-  "total_tests": 3,
-  "passed": 3,
-  "results": [
+  "per_file": [
     {
-      "test": "Clean code (false positive test)",
-      "file": "/Users/nicolacapriroloteran/Desktop/Education/JHU MBA/Gen AI/Homework/hw4/pii-detector/examples/clean_code.py",
-      "actual_findings": 0,
-      "actual_patterns": [],
-      "passed": true
+      "file": "clean_code.py",
+      "description": "No PII; tests false positive rate.",
+      "expected_count": 0,
+      "predicted_count": 0,
+      "metrics": {
+        "true_positives": 0,
+        "false_positives": 0,
+        "false_negatives": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "fp_items": [],
+        "fn_items": []
+      }
     },
     {
-      "test": "Mixed log file",
-      "file": "/Users/nicolacapriroloteran/Desktop/Education/JHU MBA/Gen AI/Homework/hw4/pii-detector/examples/mixed_log.txt",
-      "actual_findings": 7,
-      "actual_patterns": [
-        "CNS",
-        "CPF",
-        "DATE_OF_BIRTH",
-        "EMAIL",
-        "PHONE_BR",
-        "SSN"
-      ],
-      "passed": true
+      "file": "version_string_traps.py",
+      "description": "Negative test: strings that look like PII but aren't (version, IDs, placeholders).",
+      "expected_count": 0,
+      "predicted_count": 0,
+      "metrics": {
+        "true_positives": 0,
+        "false_positives": 0,
+        "false_negatives": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "fp_items": [],
+        "fn_items": []
+      }
     },
     {
-      "test": "Patient demo data",
-      "file": "/Users/nicolacapriroloteran/Desktop/Education/JHU MBA/Gen AI/Homework/hw4/pii-detector/examples/patient_demo.py",
-      "actual_findings": 13,
-      "actual_patterns": [
-        "API_KEY",
-        "CPF",
-        "CREDIT_CARD",
-        "DATE_OF_BIRTH",
-        "EMAIL",
-        "PHONE_BR",
-        "SSN"
-      ],
-      "passed": true
+      "file": "mixed_log.txt",
+      "description": "Server log with embedded PII mixed in normal log lines.",
+      "expected_count": 7,
+      "predicted_count": 7,
+      "metrics": {
+        "true_positives": 7,
+        "false_positives": 0,
+        "false_negatives": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "fp_items": [],
+        "fn_items": []
+      }
+    },
+    {
+      "file": "patient_demo.py",
+      "description": "Dense PII test file with patterns across all detector categories.",
+      "expected_count": 13,
+      "predicted_count": 13,
+      "metrics": {
+        "true_positives": 13,
+        "false_positives": 0,
+        "false_negatives": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "fp_items": [],
+        "fn_items": []
+      }
     }
-  ]
+  ],
+  "overall": {
+    "true_positives": 20,
+    "false_positives": 0,
+    "false_negatives": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0
+  }
 }

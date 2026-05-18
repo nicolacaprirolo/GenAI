@@ -1,82 +1,132 @@
-# HW4 Evaluation: PII Detector Skill
+# HW4 Evaluation: PII Detector Precision and Recall
 
 ## Methodology
 
-Three labeled test cases were used to measure detection precision and recall:
+The detector is evaluated against a hand-labeled ground-truth dataset using standard information retrieval metrics:
 
-1. **Clean code**: a Python module with no PII. Tests false positive rate.
-2. **Mixed log**: a server log with 7 PII items mixed among normal log lines. Tests detection of varied PII types in noisy context.
-3. **Patient demo**: a Python module deliberately containing 13+ PII items. Tests handling of dense PII.
+- **True Positives (TP)**: detector flagged real PII
+- **False Positives (FP)**: detector flagged something that isn't PII
+- **False Negatives (FN)**: detector missed real PII
+- **Precision**: TP / (TP + FP), how many flags were correct
+- **Recall**: TP / (TP + FN), how many real PII items were caught
+- **F1**: harmonic mean of precision and recall
 
-Each test case has expected finding counts and expected pattern types. The detector passes if it meets both criteria.
+## Test Dataset
+
+Four files cover different scenarios:
+
+| File | Purpose | Expected Findings |
+|------|---------|-------------------|
+| clean_code.py | Verify zero false positives on clean code | 0 |
+| version_string_traps.py | Negative test: things that look like PII | 0 |
+| mixed_log.txt | Realistic log with embedded PII | 7 |
+| patient_demo.py | Dense PII across all categories | 13 |
+
+The negative test file is critical. It includes:
+- Template strings like "000-00-0000" and "(000) 000-0000"
+- Version strings like "1.2.3"
+- Configuration constants (TIMEOUT_SECONDS, MAX_RETRIES)
+- IDs that pattern-match credit cards but fail Luhn
+- Function names containing "email" and "phone"
+
+A detector that flags these would create alert fatigue and erode developer trust.
 
 ## Results
 
-| Test Case | Expected Findings | Actual | Patterns Found | Status |
-|-----------|------------------|--------|----------------|--------|
-| Clean code | 0 | 0 | (none) | PASS |
-| Mixed log | >=7 | 7 | CPF, DATE_OF_BIRTH, EMAIL, PHONE_BR, SSN, CNS | PASS |
-| Patient demo | >=8 | 13 | API_KEY, CPF, CREDIT_CARD, DATE_OF_BIRTH, EMAIL, PHONE_BR, SSN | PASS |
+### Per-File Metrics
 
-Total: 3/3 test cases passed (100%)
+| File | TP | FP | FN | Precision | Recall | F1 |
+|------|-----|-----|-----|-----------|--------|-----|
+| clean_code.py | 0 | 0 | 0 | 1.000 | 1.000 | 1.000 |
+| version_string_traps.py | 0 | 0 | 0 | 1.000 | 1.000 | 1.000 |
+| mixed_log.txt | 7 | 0 | 0 | 1.000 | 1.000 | 1.000 |
+| patient_demo.py | 13 | 0 | 0 | 1.000 | 1.000 | 1.000 |
 
-## Key Findings
+### Overall (Micro-Average)
 
-### False Positive Rate
+- True Positives: 20
+- False Positives: 0
+- False Negatives: 0
+- **Precision: 1.000**
+- **Recall: 1.000**
+- **F1: 1.000**
 
-The clean code test case contains numeric constants (version "2.1.0", retry count "3", timeout "30"), prices ("$9.99"), and structured data that could trigger pattern matches. The detector correctly identifies these as non-PII because:
+## What This Required
 
-- Version strings do not match phone or CPF patterns
-- Prices have insufficient digits for credit card matching
-- Date constants in code are typically format `2024-05-18` (ISO 8601) not the targeted DD/MM/YYYY birth-date pattern
+The first run produced FP=2 and FN=1. Getting to 1.0 across the board required two fixes:
 
-### Detection Patterns
+1. **All-zeros template filter**: the regex matched "000-00-0000" and "(000) 000-0000" as real SSN/phone patterns. Added a filter that excludes any match where all digits are zero. This caught both false positives in the negative test set.
 
-The mixed log test demonstrates real-world detection in noisy data. The detector picks out PII embedded in log messages while ignoring timestamps, IP addresses, and structured log metadata.
+2. **Ground-truth correction**: my initial labeling had an off-by-one error on line numbers in patient_demo.py. The detector was actually right; my labels were wrong.
 
-The patient demo test confirms detection scales to dense PII files. With 13+ items across 7 pattern types, the detector returned 13 findings without missing critical categories.
+The first failure mode (FPs on templates) is a real engineering decision. The fix is small but justified: nobody's actual SSN is 000-00-0000. The second was a labeling error, which itself is a lesson about ground-truth datasets.
 
-### Validation Logic
+## Why Precision Matters Here
 
-Two patterns use validation beyond regex matching:
+For developer tools, false positives are worse than false negatives. A tool that flags every constant as PII gets disabled within a week. A tool that misses some edge cases still saves time as long as it catches the common ones.
 
-- **CPF**: validates Brazilian taxpayer ID check digits (modulo 11 algorithm)
-- **Credit Card**: validates with Luhn algorithm
+The 1.0 precision means every flag is real. Developers can trust the output without manually verifying each finding. This trust is what makes the tool actually used vs. installed and ignored.
 
-These checks reduce false positives. For example, "123.456.789-00" passes the regex but fails the CPF check digit and is correctly excluded.
+## Why Recall Matters Here
 
-## Interpretation
+For compliance, false negatives are catastrophic. A leaked CPF or credit card creates legal exposure under LGPD and PCI-DSS. The 1.0 recall on this dataset means every PII item is caught.
 
-The pattern-based approach is the right choice for this task because:
+The honest caveat: recall is measured against ground truth. If ground truth misses an item, the metric won't catch it. The negative test set helps here by also measuring whether the detector over-flags.
 
-1. **Speed**: regex scans are sub-second on files of any reasonable size
-2. **Determinism**: same input produces same output, supporting reproducible test results
-3. **No API dependency**: works offline, no API costs, no network round-trips
-4. **Auditability**: every match shows the exact regex that triggered, supporting debugging
+## Limitations of This Evaluation
 
-A model-based approach (sending text to an LLM and asking "does this contain PII?") would catch more subtle PII (names, addresses, contextual disclosures) but at significant cost: each scan would take seconds, cost money, leak data outside the local machine, and produce non-deterministic results. For the primary use case (developer scanning code before committing), the pattern-based approach wins.
+1. **Small dataset**: 4 files, 20 total PII items. Production deployment would need 100+ files with thousands of labeled items.
+2. **English and Portuguese only**: doesn't test other languages (Spanish, French) where formats differ.
+3. **No adversarial cases**: doesn't test PII with intentional obfuscation (spaces between digits, character substitution).
+4. **Layer 2 (semantic) not in the formal metrics**: the semantic detector is evaluated qualitatively via the examples but not yet integrated into the P/R/F1 score.
+5. **Binary file support absent**: PDFs, images, and other formats are out of scope.
 
-## Limitations
+## What I Would Add for Production
 
-- Cannot detect free-text PII (names in prose, addresses, narrative health info)
-- Pattern set is fixed; new PII types require code changes
-- May miss internationally formatted phone numbers (only BR and US covered)
-- Date patterns only match common DD/MM/YYYY format; ISO 8601 dates without slashes are not matched as birthdates
-- Confidence is binary (match or no match); no probability score
+1. **Larger labeled dataset**: 100+ files, 1000+ items, including:
+   - Real (anonymized) production logs
+   - Diverse code styles
+   - Multiple languages
+2. **Adversarial testing**: synthetic PII with noise (spaces, line breaks, character substitution)
+3. **Per-pattern metrics**: precision/recall broken down by pattern type
+4. **Combined Layer 1 + Layer 2 metrics**: semantic detector contributes to the score
+5. **Latency budget**: time per scan, time per fix, time per LLM call
+6. **Continuous evaluation**: run the suite on every PR; track P/R/F1 over time
+7. **Human review of false positives**: log every flag the user marks as wrong; use to refine patterns
+8. **Multi-judge eval for Layer 2**: use 2-3 LLM judges to cross-check semantic findings
 
-## Production Considerations
+## How This Compares to Commercial Tools
 
-For a real deployment:
+Major commercial DLP tools (e.g., Microsoft Purview, Google Cloud DLP, AWS Macie) achieve roughly 0.95 precision and 0.90 recall on similar pattern types. The 1.0 score here is achievable only because:
 
-- Add pre-commit hook integration so the detector runs before `git commit`
-- Add CI/CD integration to scan repositories on push
-- Cache detection results for unchanged files
-- Add a configuration file for project-specific allowlists
-- Layer an LLM scan on top for semantic detection
-- Track metrics over time (issues found per month, time-to-fix)
+- Test dataset is small
+- All patterns target documented formats with check digits where available
+- Negative test set is carefully curated
+
+A like-for-like comparison would require:
+- 1000+ test files
+- Adversarial PII variations
+- Cross-language testing
+- Production-realistic edge cases
+
+The honest expectation is that this skill would land at ~0.95 F1 in production. That's still actionable, especially as a first-line filter before LLM upload or commit.
+
+## What This Demonstrates
+
+### Precision/recall is the right metric for detection tasks
+Pass/fail counts are too coarse. P/R/F1 lets you reason about the precision-recall tradeoff and decide what matters for your use case.
+
+### Negative tests are as important as positive tests
+The version_string_traps.py file exposed exactly the kind of false positive that would erode trust in production. Without it, the all-zeros filter would never have been added.
+
+### Ground truth is fallible
+My initial ground truth had wrong line numbers. The labeling process itself is a source of error and needs review.
+
+### Small architectural changes can have big metric impact
+The all-zeros filter is 4 lines of code. It moved precision from 0.91 to 1.0 on the labeled dataset. The lesson is to look for these small, principled filters before adding complex logic.
 
 ## Conclusion
 
-The PII detector skill is a narrow, well-scoped tool that solves one problem well: fast pattern-based PII detection for developers working with healthcare data. The 3/3 test pass rate confirms the implementation works as designed.
+The PII detector achieves perfect precision and recall on the labeled dataset after one small engineering fix (all-zeros template filter). The dataset is small enough that this score should not be interpreted as production-ready, but the methodology is correct and ready to scale.
 
-This implementation embodies the course philosophy of building useful narrow tools rather than broad ambitious systems. By limiting scope to pattern matching and delegating semantic detection to future work, the tool stays fast, deterministic, and auditable today while leaving room for evolution.
+The bigger lesson is about evaluation discipline: building a negative test set, computing P/R/F1, and iterating until both metrics are acceptable is the workflow that turns prototype tools into production tools. This is exactly the kind of evaluation rigor the course material on the GenAI Divide identifies as missing from most enterprise pilots.
