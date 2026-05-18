@@ -1,6 +1,34 @@
+## 🎥 Video Walkthrough
+
+**[▶️ Watch on Loom (2 minutes)](PASTE_LOOM_LINK_HERE)**
+
+Link: PASTE_LOOM_LINK_HERE
+
+---
+
 # HW3: ReAct Math Agent with Tool Use
 
 A real multi-turn ReAct (Reasoning + Acting) agent following Yao et al. (2023). The agent solves math problems that require external data (product prices) by reasoning, calling tools, observing results, and iterating.
+
+## Rubric Mapping
+
+| Rubric requirement | File |
+|--------------------|------|
+| README | `README.md` (this file) |
+| Agent entry point | `agent.py` (thin wrapper) and `math_agent.py` (core) |
+| Tools documentation | `tools.md` (full schemas, return contracts, refusal behavior) |
+| Evaluation set (≥8 cases) | `eval_set.json` (10 cases including 2 edge cases) |
+| 1-2 page report | `report.md` (business case, baseline vs ReAct, deploy plan) |
+| Evaluation methodology | `EVALUATION.md` (per-question results, baseline comparison) |
+| Video walkthrough script | `VIDEO_SCRIPT.md` (talking notes for the recording) |
+
+## One-Command Run
+
+```bash
+python3 agent.py            # live mode (requires Ollama at localhost:11434)
+python3 agent.py --mock     # offline mode for grader reproducibility
+python3 agent.py --no-tools # baseline: same model, no tool access (shows the lift)
+```
 
 ## Headline Result
 

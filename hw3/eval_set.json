@@ -1,0 +1,102 @@
+{
+  "metadata": {
+    "course": "BU.330.760.41 - Generative AI in Business",
+    "assignment": "HW3 - Build a Math Agent with Tool Use",
+    "paradigm": "ReAct (Reasoning + Acting), Yao et al. 2023",
+    "test_case_count": 10,
+    "categories": ["multi_product_sum", "budget_floor_div", "discount", "discount_floor_div", "edge_missing_product", "edge_ambiguous"]
+  },
+  "tools_available": ["product_lookup", "apply_discount"],
+  "cases": [
+    {
+      "id": "q1",
+      "question": "A store sells laptops and keyboards. If a customer buys 2 laptops and 3 keyboards, what is the total cost?",
+      "expected_answer": 2760,
+      "expected_tools": ["product_lookup", "product_lookup"],
+      "category": "multi_product_sum",
+      "good_output_notes": "Agent should call product_lookup twice (once for laptop, once for keyboard), then compute 2*1200 + 3*120 = 2760."
+    },
+    {
+      "id": "q2",
+      "question": "A mouse and a keyboard are needed. If you have a budget of $500, how many mice can you buy with the remaining budget after buying one keyboard?",
+      "expected_answer": 8,
+      "expected_tools": ["product_lookup", "product_lookup"],
+      "category": "budget_floor_div",
+      "good_output_notes": "Agent should look up keyboard ($120) and mouse ($45), then compute (500-120)/45 = 8.44, floor to 8 mice. Must use floor division because you cannot buy a fractional mouse."
+    },
+    {
+      "id": "q3",
+      "question": "Headphones are on sale with 20% discount. What is the discounted price per unit?",
+      "expected_answer": 144,
+      "expected_tools": ["product_lookup", "apply_discount"],
+      "category": "discount",
+      "good_output_notes": "Multi-tool orchestration test. Agent should call product_lookup for headphones ($180), then apply_discount with price=180, percent=20, getting $144."
+    },
+    {
+      "id": "q4",
+      "question": "A customer buys 1 laptop and wants to fill the remaining budget of $1800 with monitors. How many monitors can they buy?",
+      "expected_answer": 5,
+      "expected_tools": ["product_lookup"],
+      "category": "budget_floor_div",
+      "good_output_notes": "Agent should look up monitor ($350), then compute 1800/350 = 5.14, floor to 5 monitors. Laptop price is given in the question so technically only one tool call is required, though calling product_lookup for laptop is also acceptable."
+    },
+    {
+      "id": "q5",
+      "question": "What is the total cost of 2 headphones, 3 webcams, and 1 desk lamp?",
+      "expected_answer": 710,
+      "expected_tools": ["product_lookup", "product_lookup", "product_lookup"],
+      "category": "multi_product_sum",
+      "good_output_notes": "Three-product sum. Agent should call product_lookup three times (headphones=$180, webcam=$95, desk lamp=$65) then compute 2*180 + 3*95 + 65 = 710."
+    },
+    {
+      "id": "q6",
+      "question": "You need to buy furniture for 4 office spaces, each needing 1 chair and 1 desk lamp. What is the total cost?",
+      "expected_answer": 2060,
+      "expected_tools": ["product_lookup", "product_lookup"],
+      "category": "multi_product_sum",
+      "good_output_notes": "Per-unit cost times quantity. Agent should look up chair ($450) and desk lamp ($65), then compute 4 * (450 + 65) = 4 * 515 = 2060."
+    },
+    {
+      "id": "q7",
+      "question": "A bundle includes 2 monitors, 1 keyboard, and 2 mice. What is the bundle price?",
+      "expected_answer": 910,
+      "expected_tools": ["product_lookup", "product_lookup", "product_lookup"],
+      "category": "multi_product_sum",
+      "good_output_notes": "Bundle pricing. Agent should look up monitor ($350), keyboard ($120), and mouse ($45), then compute 2*350 + 120 + 2*45 = 700 + 120 + 90 = 910."
+    },
+    {
+      "id": "q8",
+      "question": "Webcams can be bought in bulk with 15% discount per unit. How many can you buy with $1000?",
+      "expected_answer": 12,
+      "expected_tools": ["product_lookup", "apply_discount"],
+      "category": "discount_floor_div",
+      "good_output_notes": "Compound multi-tool. Agent should look up webcam ($95), apply 15% discount to get $80.75 per unit, then compute 1000/80.75 = 12.38, floor to 12."
+    },
+    {
+      "id": "q9_edge_missing",
+      "question": "What is the price of a tablet?",
+      "expected_answer": "REFUSAL",
+      "expected_tools": ["product_lookup"],
+      "category": "edge_missing_product",
+      "good_output_notes": "Edge case test. Tablets are not in the catalog. Agent should call product_lookup, receive NOT_FOUND with available products list, then explicitly refuse rather than invent a price. Output should mention the available products so the user can choose an alternative."
+    },
+    {
+      "id": "q10_edge_ambiguous",
+      "question": "I want to buy some stuff. What should I get?",
+      "expected_answer": "CLARIFY",
+      "expected_tools": [],
+      "category": "edge_ambiguous",
+      "good_output_notes": "Edge case test. Input is intentionally under-specified. Agent should call zero tools and ask for clarification on (1) what kind of products, (2) what budget. An agent that recommends arbitrary products without context is dangerous in real workflows."
+    }
+  ],
+  "evaluation_metrics": {
+    "accuracy": "extracted_answer == expected_answer (with 0.01 tolerance for floats)",
+    "tool_choice_match": "sorted(tools_called) == sorted(expected_tools)",
+    "refusal_correctness": "for edge cases, did the agent refuse / clarify instead of hallucinating?"
+  },
+  "baseline_comparison": {
+    "live_with_tools": "10/10 correct (100%)",
+    "live_no_tools": "1/10 correct (10%)",
+    "delta": "90 percentage points from a single architectural change (adding tools)"
+  }
+}
